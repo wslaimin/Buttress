@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<form xmlns="http://www.intellij.com/uidesigner/form/" version="1" bind-to-class="LayerItem">
+  <grid id="27dc6" binding="itemPanel" layout-manager="FlowLayout" hgap="5" vgap="5" flow-align="0">
+    <constraints>
+      <xy x="20" y="20" width="143" height="36"/>
+    </constraints>
+    <properties/>
+    <border type="none"/>
+    <children>
+      <component id="74c52" class="javax.swing.JCheckBox" binding="checkBox">
+        <constraints/>
+        <properties>
+          <enabled value="true"/>
+          <text value=""/>
+        </properties>
+      </component>
+      <component id="e5df6" class="javax.swing.JLabel" binding="link">
+        <constraints/>
+        <properties>
+          <enabled value="true"/>
+          <foreground color="-12802817"/>
+          <text value="Label"/>
+        </properties>
+        <clientProperties>
+          <html.disable class="java.lang.Boolean" value="false"/>
+        </clientProperties>
+      </component>
+    </children>
+  </grid>
+</form>

@@ -1,0 +1,47 @@
+{
+    "language":"java",
+    "nodes": [
+        {
+            "name": "ui layer",
+            "type": "label",
+            "nodes": [
+                {
+                    "name": "View",
+                    "type": "item",
+                    "dir":"ui"
+                },
+                {
+                    "name": "State",
+                    "type": "item",
+                    "dir":"ui"
+                },
+                {
+                    "name": "ViewModel",
+                    "type": "item",
+                    "dir":"ui"
+                },
+                {
+                    "name": "AndroidViewModel",
+                    "type": "item",
+                    "dir":"ui"
+                }
+            ]
+        },
+        {
+            "name": "data layer",
+            "type": "label",
+            "nodes": [
+                {
+                    "name": "Repository",
+                    "type": "item",
+                    "dir": "repository"
+                },
+                {
+                    "name": "Source",
+                    "type": "item",
+                    "dir": "source"
+                }
+            ]
+        }
+    ]
+}

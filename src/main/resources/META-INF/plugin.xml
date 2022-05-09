@@ -1,0 +1,41 @@
+<idea-plugin>
+    <id>com.lm.AndroidArchitect</id>
+    <name>AndroidArchitect</name>
+    <vendor email="wslaimin@gmail.com" url="http://www.yourcompany.com">TFly</vendor>
+
+    <description><![CDATA[
+        <ul>
+	<li>
+		Support Custom template of VTL(Velocity Template Language)
+	</li>
+</ul>
+<ul>
+	<li>
+		<span>
+			Support Custom options of clean architecture
+		</span>
+	</li>
+</ul>
+<ul>
+	<li>
+		Preview file structure to be created
+	</li>
+</ul>
+    ]]></description>
+
+    <!-- please see https://plugins.jetbrains.com/docs/intellij/plugin-compatibility.html
+         on how to target different products -->
+    <depends>com.intellij.modules.platform</depends>
+
+    <extensions defaultExtensionNs="com.intellij">
+        <!-- Add your extensions here -->
+    </extensions>
+
+    <actions>
+        <action class="com.lm.CreateAction" id="AndroidArchitect" text="Create Android Clean Architecture"
+                icon="/icons/android.svg"
+                description="A plugin to help to create clean android architecture">
+            <add-to-group group-id="NewGroup" anchor="first"/>
+        </action>
+    </actions>
+</idea-plugin>
