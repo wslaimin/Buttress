@@ -1,3 +1,3 @@
 package com.lm
 
-data class ConfigModel(val language:String,val nodes:List<ItemNode>)
+data class ConfigModel(val language:String,val options:List<ItemNode>)

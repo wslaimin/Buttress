@@ -12,7 +12,7 @@ object ConfigParser {
         val json = reader.readText()
         reader.close()
         val configModel = Gson().fromJson(json, ConfigModel::class.java)
-        val root = ItemNode("options", "label", null, configModel?.nodes)
+        val root = ItemNode("options", "label", null, configModel?.options)
         return parse(root, 0)
     }
 
@@ -22,7 +22,7 @@ object ConfigParser {
         reader.close()
         val configModel = Gson().fromJson(json, ConfigModel::class.java)
         Configuration.configModel = configModel
-        val root = ItemNode("options", "label", null, configModel?.nodes)
+        val root = ItemNode("options", "label", null, configModel?.options)
         return parse(root, 0)
     }
 

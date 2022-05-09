@@ -1,6 +1,6 @@
 {
     "language":"java",
-    "nodes": [
+    "options": [
         {
             "name": "ui layer",
             "type": "label",

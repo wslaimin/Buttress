@@ -23,8 +23,13 @@ intellij {
 }
 patchPluginXml {
     changeNotes = """
-      Add change notes here.<br>
-      <em>most HTML tags may be used</em>"""
+    <p>1.0.0</p>
+    <ul>
+      <li>Support Custom template of VTL(Velocity Template Language)</li>
+      <li>Support Custom options of clean architecture</li>
+      <li>Preview file structure to be created</li>
+    </ul>
+    """
 }
 
 sourceCompatibility = '1.8'

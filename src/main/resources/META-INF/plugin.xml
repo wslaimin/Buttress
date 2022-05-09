@@ -1,7 +1,7 @@
 <idea-plugin>
     <id>com.lm.AndroidArchitect</id>
     <name>AndroidArchitect</name>
-    <vendor email="wslaimin@gmail.com" url="http://www.yourcompany.com">TFly</vendor>
+    <vendor email="wslaimin@gmail.com" url="https://github.com/wslaimin/AndroidArchitect">TFly</vendor>
 
     <description><![CDATA[
         <ul>
@@ -21,6 +21,8 @@
 		Preview file structure to be created
 	</li>
 </ul>
+<br></br>
+<a href="https://github.com/wslaimin/AndroidArchitect"> Full Usage Documentation</a></br>
     ]]></description>
 
     <!-- please see https://plugins.jetbrains.com/docs/intellij/plugin-compatibility.html
