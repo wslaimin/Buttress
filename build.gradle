@@ -4,7 +4,7 @@ plugins {
 }
 
 group 'com.lm'
-version '1.0-SNAPSHOT'
+version '1.0.0'
 
 repositories {
     mavenCentral()
@@ -21,6 +21,7 @@ intellij {
     //localPath = '/Applications/IntelliJ IDEA CE.app'
     updateSinceUntilBuild = false
 }
+
 patchPluginXml {
     changeNotes = """
     <p>1.0.0</p>
@@ -30,6 +31,21 @@ patchPluginXml {
       <li>Preview file structure to be created</li>
     </ul>
     """
+}
+
+def localProperties = new Properties()
+localProperties.load(new FileInputStream(rootProject.file("keys/secret.properties")))
+
+signPlugin {
+    certificateChain = rootProject.file("keys/chain.crt").text
+
+    privateKey = rootProject.file("keys/private.pem").text
+
+    password = localProperties.get("sign.password")
+}
+
+publishPlugin{
+    token = localProperties.get("publish.token")
 }
 
 sourceCompatibility = '1.8'

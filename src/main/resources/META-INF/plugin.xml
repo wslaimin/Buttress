@@ -2,6 +2,7 @@
     <id>com.lm.AndroidArchitect</id>
     <name>AndroidArchitect</name>
     <vendor email="wslaimin@gmail.com" url="https://github.com/wslaimin/AndroidArchitect">TFly</vendor>
+    <idea-version since-build="193"/>
 
     <description><![CDATA[
         <ul>
