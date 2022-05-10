@@ -4,7 +4,7 @@ plugins {
 }
 
 group 'com.lm'
-version '1.0.0'
+version '1.0.1'
 
 repositories {
     mavenCentral()
@@ -24,6 +24,11 @@ intellij {
 
 patchPluginXml {
     changeNotes = """
+    <p>1.0.1</p>
+    <ul>
+      <li>Fix the bug of class created by template having no class name</li>
+    </ul>
+    <br/>
     <p>1.0.0</p>
     <ul>
       <li>Support Custom template of VTL(Velocity Template Language)</li>

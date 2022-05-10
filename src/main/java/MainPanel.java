@@ -89,7 +89,7 @@ public class MainPanel extends JFrame {
                         velocityEngine.setProperty(RuntimeConstants.RUNTIME_LOG_LOGSYSTEM, new NullLogChute());
                         velocityEngine.init();
 
-                        PsiFile file = dir.findFile(item.getName());
+                        PsiFile file = dir.findFile(item.getName()+".vm");
                         String templateStr = null;
                         if (file != null) {
                             templateStr = FileUtilKt.readFile(file.getVirtualFile());
