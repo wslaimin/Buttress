@@ -2,9 +2,15 @@
 <form xmlns="http://www.intellij.com/uidesigner/form/" version="1" bind-to-class="LayerItem">
   <grid id="27dc6" binding="itemPanel" layout-manager="FlowLayout" hgap="5" vgap="5" flow-align="0">
     <constraints>
-      <xy x="20" y="20" width="143" height="36"/>
+      <xy x="20" y="20" width="458" height="123"/>
     </constraints>
-    <properties/>
+    <properties>
+      <alignmentX value="0.0"/>
+      <alignmentY value="0.5"/>
+      <maximumSize width="1000" height="24"/>
+      <minimumSize width="200" height="24"/>
+      <preferredSize width="200" height="24"/>
+    </properties>
     <border type="none"/>
     <children>
       <component id="74c52" class="javax.swing.JCheckBox" binding="checkBox">
@@ -19,6 +25,9 @@
         <properties>
           <enabled value="true"/>
           <foreground color="-12802817"/>
+          <maximumSize width="500" height="48"/>
+          <minimumSize width="-1" height="-1"/>
+          <preferredSize width="200" height="24"/>
           <text value="Label"/>
         </properties>
         <clientProperties>

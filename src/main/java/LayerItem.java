@@ -1,8 +1,8 @@
 import com.intellij.util.ui.JBUI;
 
 import javax.swing.*;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
+import java.awt.event.ItemListener;
+import java.awt.event.MouseAdapter;
 
 public class LayerItem {
     private JPanel itemPanel;
@@ -25,11 +25,15 @@ public class LayerItem {
         checkBox.setSelected(bool);
     }
 
-    public void setCheckChangeListener(MouseListener listener){
-        checkBox.addMouseListener(listener);
+    public void setCheckChangeListener(ItemListener listener){
+        checkBox.addItemListener(listener);
     }
-}
 
-interface CheckChangeListener{
-    void onChanged(boolean checked);
+    public void setLinkClickListener(MouseAdapter mouseAdapter){
+        link.addMouseListener(mouseAdapter);
+    }
+
+    private void createUIComponents() {
+        // TODO: place custom component creation code here
+    }
 }

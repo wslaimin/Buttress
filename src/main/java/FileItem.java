@@ -35,4 +35,16 @@ public class FileItem {
     public JPanel getPanel(){
         return panel;
     }
+
+    public void setPanel(JPanel panel) {
+        this.panel = panel;
+    }
+
+    public JLabel getLb() {
+        return lb;
+    }
+
+    public void setLb(JLabel lb) {
+        this.lb = lb;
+    }
 }

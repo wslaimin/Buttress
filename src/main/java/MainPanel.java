@@ -1,11 +1,9 @@
-import com.intellij.openapi.command.WriteCommandAction;
-import com.intellij.psi.PsiDirectory;
-import com.intellij.psi.PsiFile;
+import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.JBScrollPane;
 import com.lm.ArchitectContext;
 import com.lm.FileUtilKt;
-import com.lm.FlatFileNode;
 import com.lm.FlatItemNode;
 import org.apache.commons.lang.StringUtils;
 import org.apache.velocity.VelocityContext;
@@ -13,6 +11,8 @@ import org.apache.velocity.app.VelocityEngine;
 import org.apache.velocity.runtime.RuntimeConstants;
 import org.apache.velocity.runtime.log.NullLogChute;
 import org.apache.velocity.runtime.resource.loader.ClasspathResourceLoader;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
@@ -20,53 +20,47 @@ import javax.swing.text.AttributeSet;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.DocumentFilter;
 import javax.swing.text.PlainDocument;
+import java.awt.event.ItemEvent;
+import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
 import java.io.StringReader;
 import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
-import java.util.regex.Pattern;
-
-import static javax.swing.ScrollPaneConstants.*;
+import static javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS;
 
 public class MainPanel extends JFrame {
     private JPanel panel;
-    private JList viewList;
-    private JList operationList;
     private JButton button;
     private JTextField textField;
     private JSplitPane splitPane;
-    private List<FlatItemNode> checkedList;
-    private PsiDirectory directory;
-    private String language;
+    private final List<FlatItemNode> nodes;
+    private final VirtualFile actionDir;
+    private final DefaultListModel<FileNode> viewListModel = new DefaultListModel<>();
 
-    public MainPanel(PsiDirectory directory) {
-        initSplitPane();
-        this.directory = directory;
+    public MainPanel(@NotNull VirtualFile actionDir,@NotNull List<FlatItemNode> nodes) {
+        this.actionDir = actionDir;
+        this.nodes = nodes;
         setContentPane(panel);
-        checkedList = new ArrayList<>();
 
         PlainDocument document = (PlainDocument) textField.getDocument();
         document.setDocumentFilter(new ClassNameFilter());
         textField.getDocument().addDocumentListener(new DocumentListener() {
             @Override
             public void insertUpdate(DocumentEvent e) {
-                setViewList(convertViewList());
                 enableButton(textField.getText().length() != 0);
+                updateLeftPanel();
             }
 
             @Override
             public void removeUpdate(DocumentEvent e) {
-                setViewList(convertViewList());
                 enableButton(textField.getText().length() != 0);
+                updateLeftPanel();
             }
 
             @Override
             public void changedUpdate(DocumentEvent e) {
-                setViewList(convertViewList());
-                enableButton(textField.getText().length() != 0);
+
             }
         });
 
@@ -74,189 +68,223 @@ public class MainPanel extends JFrame {
 
         button.addActionListener(e -> {
             final String name = textField.getText();
-            checkedList.forEach(item -> {
-                WriteCommandAction.runWriteCommandAction(ArchitectContext.project, () -> {
-                    String path = FileUtilKt.trimToRelativePath(item.getDir());
-                    String suffix = language.isEmpty() ? "" : "." + language;
-                    String fileName = name + StringUtils.capitalize(item.getName());
-
-                    String text = null;
-                    PsiDirectory dir = FileUtilKt.getTemplateDir();
-                    if (dir != null) {
+            nodes.forEach((node) -> {
+                if (node.getSelected()) {
+                    String fileName;
+                    if (node.getFileHump()) {
+                        fileName = StringUtils.capitalize(name) + node.getName();
+                    } else {
+                        fileName = StringUtils.uncapitalize(name) + "_" + node.getName();
+                    }
+                    String filePath;
+                    if(node.getDir()==null){
+                        filePath=fileName;
+                    }else{
+                        filePath=node.getDir() + "/" + fileName;
+                    }
+                    VirtualFile templateDir = FileUtilKt.getTemplateDir();
+                    if (templateDir != null) {
                         VelocityEngine velocityEngine = new VelocityEngine();
                         velocityEngine.setProperty(RuntimeConstants.RESOURCE_LOADER, "classpath");
                         velocityEngine.setProperty("classpath.resource.loader.class", ClasspathResourceLoader.class.getName());
                         velocityEngine.setProperty(RuntimeConstants.RUNTIME_LOG_LOGSYSTEM, new NullLogChute());
                         velocityEngine.init();
 
-                        PsiFile file = dir.findFile(item.getName()+".vm");
-                        String templateStr = null;
-                        if (file != null) {
-                            templateStr = FileUtilKt.readFile(file.getVirtualFile());
-                        }
-                        if (templateStr != null) {
-                            StringReader reader = new StringReader(templateStr);
+                        VirtualFile templateFile = templateDir.findChild(node.getName());
+                        if (templateFile != null) {
+                            String templateContent = FileUtilKt.readFile(templateFile);
+                            StringReader reader = new StringReader(templateContent == null ? "" : templateContent);
                             StringWriter sw = new StringWriter();
                             VelocityContext context = new VelocityContext();
-                            context.put("NAME", fileName);
+                            VirtualFile file = FileUtilKt.createFile(actionDir, filePath);
+                            String className;
+                            if (node.getClassHump()) {
+                                className = StringUtils.capitalize(name);
+                            } else {
+                                className = StringUtils.uncapitalize(name);
+                            }
+                            context.put("NAME", className);
+                            context.put("PACKAGE_NAME", getPackageName(file.getPath()));
                             velocityEngine.evaluate(context, sw, "ERROR", reader);
-                            text = sw.toString();
+                            FileUtilKt.writeToFile(file, sw.toString());
                         }
                     }
-                    FileUtilKt.createFile(directory, path, fileName + suffix, text);
-                });
+                }
             });
             setVisible(false);
         });
+
+        setPanels(nodes);
     }
 
-    public void setLanguage(String language) {
-        this.language = language;
+private void setPanels(@NotNull List<FlatItemNode> nodes) {
+        setLeftPanel();
+        setRightPanel(nodes);
     }
 
-    public void setList(List<FlatItemNode> nodes) {
-        Optional.ofNullable(nodes).ifPresent(it -> {
-            operationList.setModel(new ListModel<>(nodes));
-            operationList.setCellRenderer((ListCellRenderer<FlatItemNode>) (list, value, index, isSelected, cellHasFocus) -> {
-                if ("item".equals(value.getType())) {
-                    LayerItem item = new LayerItem();
-                    item.setSelected(value.getSelected());
-                    item.setSpace(value.getDeep() * 10);
-                    item.setLabel(value.getName());
-                    return item.getPanel();
-                } else {
-                    LabelItem item = new LabelItem();
-                    item.setSpace(value.getDeep() * 10);
-                    item.setLabel(value.getName());
-                    return item.getPanel();
-                }
-            });
+    private void setLeftPanel() {
+        JList<FileNode> viewList = new JBList<>();
+        JScrollPane scrollPane = new JBScrollPane(viewList);
+        scrollPane.setVerticalScrollBarPolicy(VERTICAL_SCROLLBAR_ALWAYS);
+        viewList.setModel(viewListModel);
+        viewList.setCellRenderer((list, value, index, isSelected, cellHasFocus) -> {
+            FileItem item = new FileItem(value.getName(), value.getName().matches(".*\\..+"));
+            item.setSpace(value.getDeep() * 10);
+            return item.getPanel();
+        });
+        splitPane.setLeftComponent(scrollPane);
+    }
 
-            operationList.addMouseListener(new MouseListener() {
-                @Override
-                public void mouseClicked(MouseEvent e) {
-                    int index = operationList.locationToIndex(e.getPoint());
-                    FlatItemNode item = (FlatItemNode) operationList.getModel().getElementAt(index);
-                    if (!"item".equals(item.getType())) {
-                        return;
-                    }
-
-                    if (e.getPoint().x > item.getDeep() * 10 + 25) {
-                        JDialog dialog = new TemplateDialog(MainPanel.this, item.getName()+".vm");
+    private void setRightPanel(@NotNull List<FlatItemNode> nodes) {
+        JPanel rightPanel = new JPanel();
+        rightPanel.setLayout(new BoxLayout(rightPanel, BoxLayout.Y_AXIS));
+        for (FlatItemNode node : nodes) {
+            if ("item".equals(node.getType())) {
+                LayerItem layerItem = new LayerItem();
+                layerItem.setSelected(node.getSelected());
+                layerItem.setSpace(node.getDeep() * 10);
+                layerItem.setLabel(node.getName());
+                layerItem.setCheckChangeListener(e -> {
+                    node.setSelected(e.getStateChange() == ItemEvent.SELECTED);
+                    updateLeftPanel();
+                });
+                layerItem.setLinkClickListener(new MouseAdapter() {
+                    @Override
+                    public void mouseClicked(MouseEvent e) {
+                        JDialog dialog = new TemplateDialog(MainPanel.this, node.getName());
                         dialog.setLocationRelativeTo(null);
                         dialog.setVisible(true);
-                    } else {
-                        item.setSelected(!item.getSelected());
-                        operationList.repaint();
-
-                        if (item.getSelected()) {
-                            checkedList.add(item);
-                        } else {
-                            checkedList.remove(item);
-                        }
-
-                        setViewList(convertViewList());
                     }
-                }
-
-                @Override
-                public void mousePressed(MouseEvent e) {
-
-                }
-
-                @Override
-                public void mouseReleased(MouseEvent e) {
-
-                }
-
-                @Override
-                public void mouseEntered(MouseEvent e) {
-
-                }
-
-                @Override
-                public void mouseExited(MouseEvent e) {
-
-                }
-            });
-        });
+                });
+                rightPanel.add(layerItem.getPanel());
+            } else if ("label".equals(node.getType())) {
+                LabelItem labelItem = new LabelItem();
+                labelItem.setSpace(node.getDeep() * 10);
+                labelItem.setLabel(node.getName());
+                rightPanel.add(labelItem.getPanel());
+            }
+        }
+        JScrollPane scrollPane = new JBScrollPane(rightPanel);
+        splitPane.setRightComponent(scrollPane);
     }
 
-    private List<FlatFileNode> convertViewList() {
-        if (checkedList.size() == 0) {
-            return null;
+    private void updateLeftPanel() {
+        FileNode root = createFileTree(nodes);
+        List<FileNode> flatList = new ArrayList<>();
+        transformTreeToList(root, flatList);
+        viewListModel.clear();
+        for (FileNode fileNode : flatList) {
+            viewListModel.addElement(fileNode);
         }
-        String suffix = language.isEmpty() ? "" : "." + language;
-        FileNode root = new FileNode(ArchitectContext.module.getName());
-        FileNode parent = root;
-        String dirPath=directory.getVirtualFile().getPath();
-        Pattern pattern= Pattern.compile(".*/src");
-        dirPath=pattern.matcher(dirPath).replaceFirst("src");
-        for (FlatItemNode item : checkedList) {
-            String[] parts;
-            String path = dirPath;
-            if (item.getDir() != null) {
-                if (item.getDir().startsWith("/")) {
-                    path += item.getDir();
+    }
+
+    @NotNull
+    private FileNode createFileTree(@NotNull List<FlatItemNode> nodes) {
+        String packagePath = getPackagePath();
+        FileNode root = new FileNode(null, -1);
+        final String name = textField.getText();
+        nodes.forEach((node) -> {
+            if (node.getSelected()) {
+                FileNode pointer = root;
+                String dir = node.getDir();
+                String fileName;
+                if (node.getFileHump()) {
+                    fileName = StringUtils.capitalize(name) + node.getName();
                 } else {
-                    path += "/" + item.getDir();
+                    fileName = StringUtils.uncapitalize(name) + "_" + node.getName();
                 }
-            }
-            parts = path.split("/");
-            for (String str : parts) {
-                List<FileNode> children = parent.getNodes();
-                FileNode nextNode = null;
-                for (int i = 0; children != null && i < children.size(); i++) {
-                    FileNode child = children.get(i);
-                    if (str.equals(child.getName())) {
-                        nextNode = child;
+                String filePath;
+                if (dir == null || dir.isEmpty()) {
+                    filePath = fileName;
+                } else {
+                    filePath = dir + "/" + fileName;
+                }
+                filePath = packagePath + "/" + filePath;
+                String[] parts = filePath.split("/");
+                for (int i = 0; i < parts.length; i++) {
+                    FileNode nextPointer = null;
+                    String part = parts[i];
+                    List<FileNode> children = pointer.getNodes();
+                    if (children != null) {
+                        for (FileNode child : children) {
+                            if (part.equals(child.getName())) {
+                                nextPointer = child;
+                                break;
+                            }
+                        }
+                    }
+                    if (nextPointer != null) {
+                        pointer = nextPointer;
+                    } else {
+                        for (int j = i; j < parts.length; j++) {
+                            children = pointer.getNodes();
+                            if (children == null) {
+                                children = new ArrayList<>();
+                                pointer.setNodes(children);
+                            }
+                            FileNode child = new FileNode(parts[j], j);
+                            children.add(child);
+                            pointer = child;
+                        }
                         break;
                     }
                 }
-                if (nextNode == null) {
-                    nextNode = new FileNode(str);
-                    if (parent.getNodes() == null) {
-                        parent.setNodes(new ArrayList<>());
-                    }
-                    parent.getNodes().add(nextNode);
-                }
-                parent = nextNode;
             }
-            if (parent.getNodes() == null) {
-                parent.setNodes(new ArrayList<>());
-            }
-            parent.getNodes().add(new FileNode(item.getName() + suffix));
-            parent = root;
-        }
-        return getViewList(root, 0);
-    }
-
-    private List<FlatFileNode> getViewList(FileNode root, int deep) {
-        List<FlatFileNode> list = new ArrayList<>();
-        if (root != null) {
-            List<FileNode> children = root.getNodes();
-            list.add(new FlatFileNode(root.getName(), children == null, deep));
-
-            for (int i = 0; children != null && i < children.size(); i++) {
-                list.addAll(getViewList(children.get(i), deep + 1));
-            }
-        }
-        return list;
-    }
-
-    private void setViewList(List<FlatFileNode> nodes) {
-        Optional.ofNullable(nodes).ifPresent(it -> {
-            viewList.setModel(new ListModel(nodes));
-            viewList.setCellRenderer((ListCellRenderer<FlatFileNode>) (list, value, index, isSelected, cellHasFocus) -> {
-                String name = value.getName();
-                if (value.isFile()) {
-                    name = textField.getText() + StringUtils.capitalize(name);
-                }
-                FileItem item = new FileItem(name, value.isFile());
-                item.setSpace(value.getDeep() * 10);
-                return item.getPanel();
-            });
         });
+        return root;
+    }
+
+    private void transformTreeToList(@Nullable FileNode root, @NotNull List<FileNode> list) {
+        if (root != null) {
+            if (root.getDeep() >= 0) {
+                list.add(root);
+            }
+            List<FileNode> children = root.getNodes();
+            if (children != null) {
+                for (FileNode child : children) {
+                    transformTreeToList(child, list);
+                }
+            }
+        }
+    }
+
+    @Nullable
+    private String getPackagePath() {
+        String path = null;
+        VirtualFile moduleDir = FileUtilKt.getModuleDir(ArchitectContext.module);
+        if (moduleDir != null) {
+            String moduleName = moduleDir.getPath().replaceAll(".*/", "");
+            path = actionDir.getPath().replaceFirst(moduleDir.getPath(), moduleName);
+        }
+        return path;
+    }
+
+    @Nullable
+    private String getPackageName(@Nullable String filePath) {
+        if (filePath == null || filePath.isEmpty()) {
+            return null;
+        } else {
+            VirtualFile[] sources = ModuleRootManager.getInstance(ArchitectContext.module).getSourceRoots();
+            String packageName = null;
+            for (VirtualFile source : sources) {
+                String sourcePath = source.getPath();
+                int j, k;
+                for (j = 0, k = 0; j < sourcePath.length() && k < filePath.length(); ) {
+                    if (sourcePath.charAt(j) == filePath.charAt(k)) {
+                        j++;
+                        k++;
+                    } else {
+                        j++;
+                        k = 0;
+                    }
+                }
+                if (j == sourcePath.length() && k > 0) {
+                    packageName = filePath.replaceFirst(sourcePath.substring(j - k) + "/?", "").replaceAll("/[^/]*$", "").replaceAll("/",".");
+                    break;
+                }
+            }
+            return packageName;
+        }
     }
 
     private void enableButton(boolean bool) {
@@ -264,18 +292,6 @@ public class MainPanel extends JFrame {
             return;
         }
         button.setEnabled(bool);
-    }
-
-    private void initSplitPane(){
-        viewList=new JBList();
-        JScrollPane scrollPane=new JBScrollPane(viewList);
-        scrollPane.setVerticalScrollBarPolicy(VERTICAL_SCROLLBAR_ALWAYS);
-        splitPane.setLeftComponent(scrollPane);
-
-        operationList=new JBList();
-        scrollPane=new JBScrollPane(operationList);
-        scrollPane.setVerticalScrollBarPolicy(VERTICAL_SCROLLBAR_ALWAYS);
-        splitPane.setRightComponent(scrollPane);
     }
 }
 

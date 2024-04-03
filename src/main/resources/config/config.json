@@ -1,29 +1,21 @@
 {
-    "language":"java",
-    "options": [
+    "name": "options",
+    "nodes": [
         {
             "name": "ui layer",
             "type": "label",
+            "fileHump": true,
             "nodes": [
                 {
-                    "name": "View",
+                    "name": "ButtressView.java",
                     "type": "item",
-                    "dir":"ui"
+                    "dir": "ui",
+                    "classHump": true
                 },
                 {
-                    "name": "State",
+                    "name": "ButtressState.java",
                     "type": "item",
-                    "dir":"ui"
-                },
-                {
-                    "name": "ViewModel",
-                    "type": "item",
-                    "dir":"ui"
-                },
-                {
-                    "name": "AndroidViewModel",
-                    "type": "item",
-                    "dir":"ui"
+                    "dir": "ui/state"
                 }
             ]
         },
@@ -32,14 +24,9 @@
             "type": "label",
             "nodes": [
                 {
-                    "name": "Repository",
+                    "name": "ButtressRepository.kt",
                     "type": "item",
                     "dir": "repository"
-                },
-                {
-                    "name": "Source",
-                    "type": "item",
-                    "dir": "source"
                 }
             ]
         }

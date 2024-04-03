@@ -1,29 +1,20 @@
 <idea-plugin>
     <id>com.lm.AndroidArchitect</id>
-    <name>AndroidArchitect</name>
-    <vendor email="wslaimin@gmail.com" url="https://github.com/wslaimin/AndroidArchitect">TFly</vendor>
+    <name>Buttress</name>
+    <vendor email="wslaimin@gmail.com" url="https://github.com/wslaimin/Buttress">TFly</vendor>
     <idea-version since-build="193"/>
 
     <description><![CDATA[
+        <p>Provide one-click code template generation functionality for IntelliJ IDEs and Android Studio.
+        <h2>Features</h2>
         <ul>
-	<li>
-		Support Custom template of VTL(Velocity Template Language)
-	</li>
-</ul>
-<ul>
-	<li>
-		<span>
-			Support Custom options of clean architecture
-		</span>
-	</li>
-</ul>
-<ul>
-	<li>
-		Preview file structure to be created
-	</li>
-</ul>
-<br></br>
-<a href="https://github.com/wslaimin/AndroidArchitect"> Full Usage Documentation</a></br>
+          <li>In theory, applicable to all languages
+          <li>Customizable addition of template code
+          <li>Code template support for class names and package names
+          <li>Ability to directly preview and modify template code
+          <li>Preview file structure to be created
+        </ul>
+        <a href="https://github.com/wslaimin/Buttress">more...</a></br>
     ]]></description>
 
     <!-- please see https://plugins.jetbrains.com/docs/intellij/plugin-compatibility.html
@@ -35,8 +26,8 @@
     </extensions>
 
     <actions>
-        <action class="com.lm.CreateAction" id="AndroidArchitect" text="Create Android Clean Architecture"
-                icon="/icons/android.svg"
+        <action class="com.lm.CreateAction" id="AndroidArchitect" text="Buttress"
+                icon="/icons/buttress.svg"
                 description="A plugin to help to create clean android architecture">
             <add-to-group group-id="NewGroup" anchor="first"/>
         </action>

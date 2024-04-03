@@ -1,10 +1,6 @@
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.command.WriteCommandAction;
-import com.intellij.psi.PsiDirectory;
-import com.intellij.psi.PsiFile;
-import com.lm.ArchitectContext;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.lm.FileUtilKt;
-
+import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.KeyEvent;
@@ -18,7 +14,7 @@ public class TemplateDialog extends JDialog {
     private JTextArea textArea;
     private final String templateFileName;
 
-    public TemplateDialog(Frame frame, String fileName) {
+    public TemplateDialog(Frame frame,@NotNull String fileName) {
         super(frame);
         templateFileName = fileName;
         setSize(600, 400);
@@ -39,37 +35,25 @@ public class TemplateDialog extends JDialog {
 
         contentPane.registerKeyboardAction(e -> onCancel(), KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
 
-        WriteCommandAction.runWriteCommandAction(ArchitectContext.project, () -> {
-            PsiDirectory dir = FileUtilKt.getTemplateDir();
-            if (dir == null) {
-                dir = FileUtilKt.createTemplateDir();
+        VirtualFile templateDir=FileUtilKt.getTemplateDir();
+        if(templateDir!=null){
+            VirtualFile file=templateDir.findChild(templateFileName);
+            if(file!=null){
+                textArea.setText(FileUtilKt.readFile(file));
             }
-            if (dir != null) {
-                PsiFile file = dir.findFile(fileName);
-                if (file != null) {
-                    final String text = FileUtilKt.readFile(file.getVirtualFile());
-                    ApplicationManager.getApplication().invokeLater(() -> {
-                        textArea.setText(text);
-                    });
-                }
-            }
-        });
+        }
     }
 
     private void onOK() {
-        PsiDirectory dir = FileUtilKt.getTemplateDir();
-        if (dir != null) {
-            PsiFile file = dir.findFile(templateFileName);
-            if (file != null) {
-                WriteCommandAction.runWriteCommandAction(ArchitectContext.project, () -> {
-                    FileUtilKt.writeToFile(file.getVirtualFile(), textArea.getText());
-                });
-            } else {
-                WriteCommandAction.runWriteCommandAction(ArchitectContext.project, () -> {
-                    FileUtilKt.createFile(dir, null, templateFileName, textArea.getText());
-                });
-            }
+        VirtualFile templateDir=FileUtilKt.getTemplateDir();
+        if(templateDir==null){
+            templateDir=FileUtilKt.getTemplateDir();
         }
+        VirtualFile file=templateDir.findChild(templateFileName);
+        if(file==null){
+            file=FileUtilKt.createFile(templateDir,templateFileName);
+        }
+        FileUtilKt.writeToFile(file,textArea.getText());
         dispose();
     }
 

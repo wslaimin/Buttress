@@ -4,7 +4,7 @@ plugins {
 }
 
 group 'com.lm'
-version '1.0.1'
+version '1.1.0'
 
 repositories {
     mavenCentral()
@@ -24,6 +24,12 @@ intellij {
 
 patchPluginXml {
     changeNotes = """
+    <p>1.1.0</p>
+    <ul>
+      <li>The plugin is renamed to "Buttress"</li>
+      <li>Simplified configuration</li>
+      <li>Automatic matching of file extensions</li>
+    </ul>
     <p>1.0.1</p>
     <ul>
       <li>Fix the bug of class created by template having no class name</li>

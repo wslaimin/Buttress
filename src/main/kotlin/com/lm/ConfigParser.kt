@@ -1,49 +1,42 @@
 package com.lm
 
 import com.google.gson.Gson
-import java.io.File
-import java.io.FileReader
 import java.io.InputStream
 import java.io.InputStreamReader
 
 object ConfigParser {
-    fun parse(file: File): List<FlatItemNode> {
-        val reader = FileReader(file)
-        val json = reader.readText()
-        reader.close()
-        val configModel = Gson().fromJson(json, ConfigModel::class.java)
-        val root = ItemNode("options", "label", null, configModel?.options)
-        return parse(root, 0)
-    }
-
     fun parse(inputStream: InputStream): List<FlatItemNode> {
-        val reader = InputStreamReader(inputStream)
-        val json = reader.readText()
-        reader.close()
-        val configModel = Gson().fromJson(json, ConfigModel::class.java)
-        Configuration.configModel = configModel
-        val root = ItemNode("options", "label", null, configModel?.options)
-        return parse(root, 0)
-    }
-
-    private fun parse(node: ItemNode, deep: Int): List<FlatItemNode> {
-        val items = mutableListOf<FlatItemNode>()
-        node.nodes?.forEach {
-            items.addAll(parse(it, deep + 1))
+        return inputStream.use { stream ->
+            val reader = InputStreamReader(stream)
+            val json = reader.readText()
+            reader.close()
+            val rootNode = Gson().fromJson(json, ItemNode::class.java)
+            val list = ArrayList<FlatItemNode>()
+            rootNode.nodes?.forEach {
+                var fileHump = it.fileHump ?: rootNode.fileHump ?: false
+                var classHump = it.classHump ?: rootNode.classHump ?: false
+                list.add(FlatItemNode(it.name, it.type, it.dir, 0, false,fileHump,classHump))
+                if(it.type=="item"&&it.nodes!=null){
+                    throw RuntimeException("Item node must not hava nodes")
+                }else {
+                    it.nodes?.forEach { childNode ->
+                        fileHump = childNode.fileHump ?: it.fileHump ?: rootNode.fileHump ?: false
+                        classHump = childNode.classHump ?: it.classHump ?: rootNode.classHump ?: false
+                        list.add(
+                            FlatItemNode(
+                                childNode.name,
+                                childNode.type,
+                                childNode.dir,
+                                1,
+                                false,
+                                fileHump,
+                                classHump
+                            )
+                        )
+                    }
+                }
+            }
+            list
         }
-        items.add(0, FlatItemNode(node.name, node.type, node.dir, deep))
-        return items
-    }
-}
-
-fun main() {
-    val str = "/com/addcn/car";
-    str.split("/").forEach {
-        println(it)
-    }
-
-    val str2 = "com/addcn/car";
-    str2.split("/").forEach {
-        println(it)
     }
 }
