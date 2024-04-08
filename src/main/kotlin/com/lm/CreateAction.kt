@@ -17,7 +17,6 @@ class CreateAction : AnAction() {
         val module = LangDataKeys.MODULE.getData(e.dataContext) ?: return
         ArchitectContext.project = project
         ArchitectContext.module = module
-        ArchitectContext.module.moduleTypeName
         val directory = when (val navigatable = LangDataKeys.NAVIGATABLE.getData(e.dataContext)) {
             is PsiDirectory -> navigatable
             is PsiFile -> navigatable.containingDirectory

@@ -5,11 +5,10 @@ import com.intellij.ui.components.JBScrollPane;
 import com.lm.ArchitectContext;
 import com.lm.FileUtilKt;
 import com.lm.FlatItemNode;
-import org.apache.commons.lang.StringUtils;
+import com.lm.StringExtKt;
 import org.apache.velocity.VelocityContext;
 import org.apache.velocity.app.VelocityEngine;
 import org.apache.velocity.runtime.RuntimeConstants;
-import org.apache.velocity.runtime.log.NullLogChute;
 import org.apache.velocity.runtime.resource.loader.ClasspathResourceLoader;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -37,10 +36,12 @@ public class MainPanel extends JFrame {
     private final List<FlatItemNode> nodes;
     private final VirtualFile actionDir;
     private final DefaultListModel<FileNode> viewListModel = new DefaultListModel<>();
+    private final VelocityEngine velocityEngine;
 
     public MainPanel(@NotNull VirtualFile actionDir,@NotNull List<FlatItemNode> nodes) {
         this.actionDir = actionDir;
         this.nodes = nodes;
+        velocityEngine=initVelocity();
         setContentPane(panel);
 
         PlainDocument document = (PlainDocument) textField.getDocument();
@@ -48,13 +49,13 @@ public class MainPanel extends JFrame {
         textField.getDocument().addDocumentListener(new DocumentListener() {
             @Override
             public void insertUpdate(DocumentEvent e) {
-                enableButton(textField.getText().length() != 0);
+                enableButton(!textField.getText().isEmpty());
                 updateLeftPanel();
             }
 
             @Override
             public void removeUpdate(DocumentEvent e) {
-                enableButton(textField.getText().length() != 0);
+                enableButton(!textField.getText().isEmpty());
                 updateLeftPanel();
             }
 
@@ -72,9 +73,9 @@ public class MainPanel extends JFrame {
                 if (node.getSelected()) {
                     String fileName;
                     if (node.getFileHump()) {
-                        fileName = StringUtils.capitalize(name) + node.getName();
+                        fileName = getName(name,true) + node.getName();
                     } else {
-                        fileName = StringUtils.uncapitalize(name) + "_" + node.getName();
+                        fileName = getName(name,false) + "_" + node.getName();
                     }
                     String filePath;
                     if(node.getDir()==null){
@@ -84,12 +85,6 @@ public class MainPanel extends JFrame {
                     }
                     VirtualFile templateDir = FileUtilKt.getTemplateDir();
                     if (templateDir != null) {
-                        VelocityEngine velocityEngine = new VelocityEngine();
-                        velocityEngine.setProperty(RuntimeConstants.RESOURCE_LOADER, "classpath");
-                        velocityEngine.setProperty("classpath.resource.loader.class", ClasspathResourceLoader.class.getName());
-                        velocityEngine.setProperty(RuntimeConstants.RUNTIME_LOG_LOGSYSTEM, new NullLogChute());
-                        velocityEngine.init();
-
                         VirtualFile templateFile = templateDir.findChild(node.getName());
                         if (templateFile != null) {
                             String templateContent = FileUtilKt.readFile(templateFile);
@@ -99,9 +94,9 @@ public class MainPanel extends JFrame {
                             VirtualFile file = FileUtilKt.createFile(actionDir, filePath);
                             String className;
                             if (node.getClassHump()) {
-                                className = StringUtils.capitalize(name);
+                                className = getName(name,true);
                             } else {
-                                className = StringUtils.uncapitalize(name);
+                                className = getName(name,false);
                             }
                             context.put("NAME", className);
                             context.put("PACKAGE_NAME", getPackageName(file.getPath()));
@@ -189,9 +184,9 @@ private void setPanels(@NotNull List<FlatItemNode> nodes) {
                 String dir = node.getDir();
                 String fileName;
                 if (node.getFileHump()) {
-                    fileName = StringUtils.capitalize(name) + node.getName();
+                    fileName = getName(name,true) + node.getName();
                 } else {
-                    fileName = StringUtils.uncapitalize(name) + "_" + node.getName();
+                    fileName = getName(name,false) + "_" + node.getName();
                 }
                 String filePath;
                 if (dir == null || dir.isEmpty()) {
@@ -292,6 +287,24 @@ private void setPanels(@NotNull List<FlatItemNode> nodes) {
             return;
         }
         button.setEnabled(bool);
+    }
+
+    private String getName(String name, boolean hump){
+        if (hump) {
+            return StringExtKt.capitalize(name);
+        } else {
+            return StringExtKt.uncapitalize(name);
+        }
+    }
+
+    private VelocityEngine initVelocity(){
+        VelocityEngine velocityEngine = new VelocityEngine();
+        velocityEngine.setProperty(RuntimeConstants.RESOURCE_LOADER, "classpath");
+        velocityEngine.setProperty("classpath.resource.loader.class", ClasspathResourceLoader.class.getName());
+        velocityEngine.setProperty( RuntimeConstants.RUNTIME_LOG_LOGSYSTEM_CLASS,"org.apache.velocity.runtime.log.Log4JLogChute" );
+        velocityEngine.setProperty("runtime.log.logsystem.log4j.logger","Buttress");
+        velocityEngine.init();
+        return velocityEngine;
     }
 }
 
