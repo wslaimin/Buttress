@@ -133,9 +133,11 @@ private void setPanels(@NotNull List<FlatItemNode> nodes) {
     private void setRightPanel(@NotNull List<FlatItemNode> nodes) {
         JPanel rightPanel = new JPanel();
         rightPanel.setLayout(new BoxLayout(rightPanel, BoxLayout.Y_AXIS));
+        LayerItem layerItem;
+        LabelItem labelItem;
         for (FlatItemNode node : nodes) {
             if ("item".equals(node.getType())) {
-                LayerItem layerItem = new LayerItem();
+                layerItem = new LayerItem();
                 layerItem.setSelected(node.getSelected());
                 layerItem.setSpace(node.getDeep() * 10);
                 layerItem.setLabel(node.getName());
@@ -153,7 +155,7 @@ private void setPanels(@NotNull List<FlatItemNode> nodes) {
                 });
                 rightPanel.add(layerItem.getPanel());
             } else if ("label".equals(node.getType())) {
-                LabelItem labelItem = new LabelItem();
+                labelItem = new LabelItem();
                 labelItem.setSpace(node.getDeep() * 10);
                 labelItem.setLabel(node.getName());
                 rightPanel.add(labelItem.getPanel());
@@ -289,7 +291,8 @@ private void setPanels(@NotNull List<FlatItemNode> nodes) {
         button.setEnabled(bool);
     }
 
-    private String getName(String name, boolean hump){
+    @NotNull
+    private String getName(@NotNull String name, boolean hump){
         if (hump) {
             return StringExtKt.capitalize(name);
         } else {
