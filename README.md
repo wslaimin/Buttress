@@ -1,4 +1,4 @@
-# AndroidArchitect
+# Buttress
 Provide one-click code template generation functionality for IntelliJ IDEs and Android Studio.
 
 ## Support parameters in code templates
