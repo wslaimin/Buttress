@@ -46,7 +46,7 @@ fun writeToFile(file: VirtualFile, text: String?) {
 fun writeToFile(file: VirtualFile, inputStream: InputStream) {
     ApplicationManager.getApplication().runWriteAction {
         inputStream.use {
-            val scanner = Scanner(it).useDelimiter("\\A");
+            val scanner = Scanner(it).useDelimiter("\\A")
             if (scanner.hasNext()) {
                 VfsUtil.saveText(file, scanner.next())
             }
@@ -65,5 +65,13 @@ fun getTemplateDir(): VirtualFile? {
 
 fun getModuleDir(module: Module): VirtualFile? {
     val contentRoots = module.rootManager.contentRoots.filter { it.isDirectory }
-    return contentRoots.find { it.name == module.name } ?: contentRoots.firstOrNull()
+    var commonFile: VirtualFile? = null
+    contentRoots.forEach {
+        commonFile = if (commonFile != null) {
+            VfsUtil.getCommonAncestor(commonFile!!, it)
+        } else {
+            it
+        }
+    }
+    return commonFile
 }
